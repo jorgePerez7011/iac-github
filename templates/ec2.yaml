@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: EC2 creada desde GitHub Actions
+Description: EC2 creada desde GitHub Actions con UserData verdiblanca
 
 Resources:
   MyEC2:
@@ -8,10 +8,40 @@ Resources:
       AvailabilityZone: us-east-1a
       ImageId: ami-0cca150d127c2216f
       InstanceType: t3.micro
+      # 🟢 AQUÍ COMIENZA LA USER DATA
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # Actualizar el sistema e instalar Apache (servidor web)
+          dnf update -y
+          dnf install -y httpd
+          
+          # Iniciar y habilitar Apache para que corra siempre
+          systemctl start httpd
+          systemctl enable httpd
+          
+          # Crear la página web con el mensaje del más grande
+          echo "<html>
+          <head>
+            <title>Atlético Nacional</title>
+            <charset utf-8>
+          </head>
+          <body style='font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f0fbf0;'>
+            <h1 style='color: #008744; font-size: 50px;'>¡Atlético Nacional!</h1>
+            <p style='font-size: 24px; color: #333;'>El mejor equipo de Latinoamérica. 🟢⚪</p>
+          </body>
+          </html>" > /var/www/html/index.index.html
+          
+          # Renombrar correctamente a index.html por si acaso
+          mv /var/www/html/index.index.html /var/www/html/index.html
       Tags:
         - Key: Name
-          Value: EC2-GitHubActions
+          Value: EC2-GitHubActions-Nacional
 
 Outputs:
   InstanceId:
     Value: !Ref MyEC2
+  # 🌐 Agregamos esto para que te dé la URL de una vez en los logs si quieres buscarla
+  PublicDNS:
+    Description: URL pública para ver el mensaje
+    Value: !GetAtt MyEC2.PublicDnsName
